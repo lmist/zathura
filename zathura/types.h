@@ -32,6 +32,11 @@ typedef struct zathura_page_widget_class_s ZathuraPageWidgetClass;
 typedef struct zathura_s zathura_t;
 
 /**
+ * pdfdb explorer
+ */
+typedef struct zathura_pdfdb_explorer_s zathura_pdfdb_explorer_t;
+
+/**
  * Plugin manager
  */
 typedef struct zathura_plugin_manager_s zathura_plugin_manager_t;

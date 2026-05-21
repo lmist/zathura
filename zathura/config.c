@@ -435,15 +435,17 @@ void config_load_default(zathura_t* zathura) {
   zathura->modes.index        = girara_mode_add(gsession, "index");
   zathura->modes.insert       = girara_mode_add(gsession, "insert");
   zathura->modes.presentation = girara_mode_add(gsession, "presentation");
+  zathura->modes.pdfdb        = girara_mode_add(gsession, "pdfdb");
 
 #define NORMAL zathura->modes.normal
 #define INSERT zathura->modes.insert
 #define INDEX zathura->modes.index
 #define FULLSCREEN zathura->modes.fullscreen
 #define PRESENTATION zathura->modes.presentation
+#define PDFDB zathura->modes.pdfdb
 
   const girara_mode_t all_modes[] = {
-      NORMAL, INSERT, INDEX, FULLSCREEN, PRESENTATION,
+      NORMAL, INSERT, INDEX, FULLSCREEN, PRESENTATION, PDFDB,
   };
 
   /* Set default mode */
@@ -496,6 +498,11 @@ void config_load_default(zathura_t* zathura) {
   girara_setting_add(gsession, "guioptions",               "s",                  STRING,  FALSE, _("Show or hide certain GUI elements"), cb_guioptions, NULL);
 
   girara_setting_add(gsession, "database",              DEFAULT_DB,   STRING, true,  _("Database backend"),         NULL, NULL);
+  girara_setting_add(gsession, "pdfdb-database-url",    "voltdb://localhost:21212", STRING, false, _("pdfdb VoltDB URL"), NULL, NULL);
+  girara_setting_add(gsession, "pdfdb-dbos-user",       "pdfdb",      STRING, false, _("pdfdb DBOS user"),          NULL, NULL);
+  girara_setting_add(gsession, "pdfdb-cache-dir",       "",           STRING, false, _("pdfdb cache directory"),    NULL, NULL);
+  int_value = 200;
+  girara_setting_add(gsession, "pdfdb-result-limit",    &int_value,   INT,    false, _("pdfdb result limit"),       NULL, NULL);
   girara_setting_add(gsession, "filemonitor",           "glib",       STRING, true,  _("File monitor backend"),     NULL, NULL);
   uint_value = 10;
   girara_setting_add(gsession, "zoom-step",             &uint_value,  UINT,   false, _("Zoom step"),                NULL, NULL);
@@ -636,6 +643,7 @@ void config_load_default(zathura_t* zathura) {
   /* shortcuts */
   girara_shortcut_add(gsession, 0,                GDK_KEY_F5,          NULL, sc_toggle_presentation,    NORMAL, 0, NULL);
   girara_shortcut_add(gsession, 0,                GDK_KEY_F11,         NULL, sc_toggle_fullscreen,      NORMAL, 0, NULL);
+  girara_shortcut_add(gsession, GDK_META_MASK,    GDK_KEY_b,           NULL, sc_toggle_pdfdb_explorer,  NORMAL, 0, NULL);
 
   add_default_shortcuts(gsession, NORMAL);
 
@@ -644,6 +652,7 @@ void config_load_default(zathura_t* zathura) {
 
   /* Fullscreen mode */
   girara_shortcut_add(gsession, 0, GDK_KEY_F11, NULL, sc_toggle_fullscreen, FULLSCREEN, 0, NULL);
+  girara_shortcut_add(gsession, GDK_META_MASK, GDK_KEY_b, NULL, sc_toggle_pdfdb_explorer, FULLSCREEN, 0, NULL);
 
   add_default_shortcuts(gsession, FULLSCREEN);
 
@@ -682,6 +691,9 @@ void config_load_default(zathura_t* zathura) {
   girara_shortcut_add(gsession, 0,                GDK_KEY_Escape,      NULL, sc_toggle_index,   INDEX, 0,                  NULL);
   girara_shortcut_add(gsession, GDK_CONTROL_MASK, GDK_KEY_bracketleft, NULL, sc_toggle_index,   INDEX, 0,                  NULL);
   girara_shortcut_add(gsession, GDK_CONTROL_MASK, GDK_KEY_c,           NULL, sc_toggle_index,   INDEX, 0,                  NULL);
+
+  /* pdfdb mode */
+  girara_shortcut_add(gsession, GDK_META_MASK,    GDK_KEY_b,           NULL, sc_toggle_pdfdb_explorer, PDFDB, 0, NULL);
 
   /* Presentation mode */
   girara_shortcut_add(gsession, 0,              GDK_KEY_J,             NULL, sc_navigate,            PRESENTATION, NEXT,         NULL);
@@ -760,6 +772,14 @@ void config_load_default(zathura_t* zathura) {
   girara_inputbar_command_add(gsession, "!",          NULL,   cmd_exec,                NULL,          _("Execute a command")); /* like vim */
   girara_inputbar_command_add(gsession, "help",       NULL,   cmd_help,                NULL,          _("Show help"));
   girara_inputbar_command_add(gsession, "open",       "o",    cmd_open,                cc_open,       _("Open document"));
+  girara_inputbar_command_add(gsession, "pdfdb",      NULL,   cmd_pdfdb,               NULL,          _("Toggle pdfdb explorer"));
+  girara_inputbar_command_add(gsession, "pdfdb-open", NULL,   cmd_pdfdb_open,          NULL,          _("Open pdfdb document"));
+  girara_inputbar_command_add(gsession, "tabopen",    NULL,   cmd_tabopen,             NULL,          _("Open document in new tab"));
+  girara_inputbar_command_add(gsession, "tabnext",    NULL,   cmd_tabnext,             NULL,          _("Switch to next tab"));
+  girara_inputbar_command_add(gsession, "tabprevious",NULL,   cmd_tabprevious,         NULL,          _("Switch to previous tab"));
+  girara_inputbar_command_add(gsession, "tabclose",   NULL,   cmd_tabclose,            NULL,          _("Close current tab"));
+  girara_inputbar_command_add(gsession, "splitopen",  NULL,   cmd_splitopen,           NULL,          _("Open document in split"));
+  girara_inputbar_command_add(gsession, "pane-next",  NULL,   cmd_pane_next,           NULL,          _("Switch to next pane"));
   girara_inputbar_command_add(gsession, "quit",       "q",    cmd_quit,                NULL,          _("Close zathura"));
   girara_inputbar_command_add(gsession, "print",      NULL,   cmd_print,               NULL,          _("Print document"));
   girara_inputbar_command_add(gsession, "save",       NULL,   cmd_save,                cc_write,      _("Save document"));
@@ -814,6 +834,7 @@ void config_load_default(zathura_t* zathura) {
   girara_shortcut_mapping_add(gsession, "snap_to_page",             sc_snap_to_page);
   girara_shortcut_mapping_add(gsession, "toggle_fullscreen",        sc_toggle_fullscreen);
   girara_shortcut_mapping_add(gsession, "toggle_index",             sc_toggle_index);
+  girara_shortcut_mapping_add(gsession, "toggle_pdfdb_explorer",    sc_toggle_pdfdb_explorer);
   girara_shortcut_mapping_add(gsession, "toggle_page_mode",         sc_toggle_page_mode);
   girara_shortcut_mapping_add(gsession, "toggle_presentation",      sc_toggle_presentation);
   girara_shortcut_mapping_add(gsession, "toggle_single_page_mode",  sc_toggle_single_page_mode);

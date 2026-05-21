@@ -42,6 +42,8 @@
 #include "render.h"
 #include "page.h"
 #include "page-widget.h"
+#include "pdfdb.h"
+#include "pdfdb-explorer.h"
 #include "plugin.h"
 #include "adjustment.h"
 #include "dbus-interface.h"
@@ -250,6 +252,21 @@ static bool init_ui(zathura_t* zathura) {
   zathura->signals.monitors_changed_handler = 0;
 
   /* page view */
+  zathura->ui.shell = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+  if (zathura->ui.shell == NULL) {
+    girara_error("Failed to create main view shell.");
+    return false;
+  }
+
+  zathura->ui.pdfdb_explorer = zathura_pdfdb_explorer_new(zathura);
+  if (zathura->ui.pdfdb_explorer == NULL) {
+    girara_error("Failed to create pdfdb explorer.");
+    return false;
+  }
+  GtkWidget* pdfdb_widget = zathura_pdfdb_explorer_get_widget(zathura->ui.pdfdb_explorer);
+  gtk_paned_pack1(GTK_PANED(zathura->ui.shell), pdfdb_widget, false, false);
+  gtk_widget_hide(pdfdb_widget);
+
   zathura->ui.view = gtk_scrolled_window_new(NULL, NULL);
 
   /* document widget */
@@ -261,7 +278,8 @@ static bool init_ui(zathura_t* zathura) {
 
   zathura->ui.document_widget = ZATHURA_DOCUMENT_WIDGET(widget);
   gtk_container_add(GTK_CONTAINER(zathura->ui.view), widget);
-  girara_set_view(zathura->ui.session, zathura->ui.view);
+  gtk_paned_pack2(GTK_PANED(zathura->ui.shell), zathura->ui.view, true, false);
+  girara_set_view(zathura->ui.session, zathura->ui.shell);
 
   /* load scrollbar settings */
   g_autofree char* view_options = NULL;
@@ -495,6 +513,9 @@ void zathura_free(zathura_t* zathura) {
 
   /* stop D-Bus */
   g_clear_object(&zathura->dbus);
+
+  zathura_pdfdb_explorer_free(zathura->ui.pdfdb_explorer);
+  zathura->ui.pdfdb_explorer = NULL;
 
   if (zathura->ui.session != NULL) {
     girara_session_destroy(zathura->ui.session);
@@ -731,6 +752,14 @@ static gboolean document_info_open(gpointer data) {
           g_free(document_info->zathura->stdin_support.file);
         }
         document_info->zathura->stdin_support.file = g_strdup(file);
+      }
+    } else if (zathura_pdfdb_uri_parse(document_info->path, NULL) == true) {
+      GError* error = NULL;
+      file = zathura_pdfdb_resolve_uri(document_info->zathura, document_info->path, &uri, &error);
+      if (file == NULL) {
+        girara_notify(document_info->zathura->ui.session, GIRARA_ERROR, _("Could not resolve pdfdb URI: %s"),
+                      error != NULL ? error->message : _("unknown error"));
+        g_clear_error(&error);
       }
     } else {
       /* expand ~ and ~user in paths if present */
@@ -1128,7 +1157,7 @@ bool document_open(zathura_t* zathura, const char* path, const char* uri, const 
   }
 
   zathura_document_widget_refresh_layout(ZATHURA_DOCUMENT_WIDGET(zathura->ui.document_widget));
-  girara_set_view(zathura->ui.session, zathura->ui.view);
+  girara_set_view(zathura->ui.session, zathura->ui.shell != NULL ? zathura->ui.shell : zathura->ui.view);
 
   /* update title */
   {

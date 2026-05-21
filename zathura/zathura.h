@@ -120,8 +120,10 @@ struct zathura_s {
     } colors;
 
     GtkWidget* view;                        /**< Scrolled Window */
+    GtkWidget* shell;                       /**< Main view shell */
     ZathuraDocumentWidget* document_widget; /**< Widget that contains all rendered pages */
     GtkWidget* index;                       /**< Widget to show the index of the document */
+    zathura_pdfdb_explorer_t* pdfdb_explorer; /**< Widget to search pdfdb documents */
   } ui;
 
   struct {
@@ -161,6 +163,7 @@ struct zathura_s {
     girara_mode_t index;        /**< Index mode */
     girara_mode_t insert;       /**< Insert mode */
     girara_mode_t presentation; /**< Presentation mode */
+    girara_mode_t pdfdb;        /**< pdfdb explorer mode */
   } modes;
 
   struct {

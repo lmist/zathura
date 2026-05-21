@@ -28,3 +28,18 @@ option('convert-icon',
   value: 'auto',
   description: 'convert icon to PNG'
 )
+option('pdfdb',
+  type: 'feature',
+  value: 'auto',
+  description: 'pdfdb DBOS document explorer and pdfdb:// resolver'
+)
+option('voltdb-client-include',
+  type: 'string',
+  value: '',
+  description: 'Directory containing VoltDB C++ client headers for pdfdb support'
+)
+option('voltdb-client-libdir',
+  type: 'string',
+  value: '',
+  description: 'Directory containing libvoltdbcpp for pdfdb support'
+)

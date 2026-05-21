@@ -99,6 +99,31 @@ bool cmd_hlsearch(girara_session_t* session, girara_list_t* argument_list);
 bool cmd_open(girara_session_t* session, girara_list_t* argument_list);
 
 /**
+ * Toggle the pdfdb document explorer.
+ *
+ * @param session The used girara session
+ * @param argument_list List of passed arguments
+ * @return true if no error occurred
+ */
+bool cmd_pdfdb(girara_session_t* session, girara_list_t* argument_list);
+
+/**
+ * Open a pdfdb document by slug or id.
+ *
+ * @param session The used girara session
+ * @param argument_list List of passed arguments
+ * @return true if no error occurred
+ */
+bool cmd_pdfdb_open(girara_session_t* session, girara_list_t* argument_list);
+
+bool cmd_tabopen(girara_session_t* session, girara_list_t* argument_list);
+bool cmd_tabnext(girara_session_t* session, girara_list_t* argument_list);
+bool cmd_tabprevious(girara_session_t* session, girara_list_t* argument_list);
+bool cmd_tabclose(girara_session_t* session, girara_list_t* argument_list);
+bool cmd_splitopen(girara_session_t* session, girara_list_t* argument_list);
+bool cmd_pane_next(girara_session_t* session, girara_list_t* argument_list);
+
+/**
  * Print the current file
  *
  * @param session The used girara session

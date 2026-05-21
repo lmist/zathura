@@ -22,6 +22,8 @@
 #include "internal.h"
 #include "page-widget.h"
 #include "page.h"
+#include "pdfdb.h"
+#include "pdfdb-explorer.h"
 #include "plugin.h"
 #include "print.h"
 #include "render.h"
@@ -312,6 +314,113 @@ bool cmd_open(girara_session_t* session, girara_list_t* argument_list) {
     return false;
   }
 
+  return true;
+}
+
+static const char* first_arg(girara_list_t* argument_list) {
+  return girara_list_size(argument_list) > 0 ? girara_list_nth(argument_list, 0) : NULL;
+}
+
+static zathura_pdfdb_open_target_t target_from_text(const char* text) {
+  if (g_strcmp0(text, "tab") == 0) {
+    return ZATHURA_PDFDB_OPEN_TAB;
+  } else if (g_strcmp0(text, "window") == 0) {
+    return ZATHURA_PDFDB_OPEN_WINDOW;
+  } else if (g_strcmp0(text, "split") == 0) {
+    return ZATHURA_PDFDB_OPEN_SPLIT;
+  }
+  return ZATHURA_PDFDB_OPEN_CURRENT;
+}
+
+bool cmd_pdfdb(girara_session_t* session, girara_list_t* UNUSED(argument_list)) {
+  g_return_val_if_fail(session != NULL, false);
+  g_return_val_if_fail(session->global.data != NULL, false);
+  zathura_t* zathura = session->global.data;
+  return zathura_pdfdb_explorer_toggle(zathura->ui.pdfdb_explorer);
+}
+
+bool cmd_pdfdb_open(girara_session_t* session, girara_list_t* argument_list) {
+  g_return_val_if_fail(session != NULL, false);
+  g_return_val_if_fail(session->global.data != NULL, false);
+  zathura_t* zathura = session->global.data;
+
+  const unsigned int argc = girara_list_size(argument_list);
+  if (argc < 1 || argc > 2) {
+    girara_notify(session, GIRARA_ERROR, _("Usage: pdfdb-open [tab|window|split] <slug-or-id>"));
+    return false;
+  }
+
+  const char* key = first_arg(argument_list);
+  zathura_pdfdb_open_target_t target = ZATHURA_PDFDB_OPEN_CURRENT;
+  if (argc == 2) {
+    target = target_from_text(key);
+    key = girara_list_nth(argument_list, 1);
+  }
+
+  zathura_pdfdb_document_t doc = {
+      .slug = (char*)key,
+  };
+  return zathura_pdfdb_open(zathura, &doc, target);
+}
+
+static bool open_path_like(girara_session_t* session, girara_list_t* argument_list, zathura_pdfdb_open_target_t target) {
+  g_return_val_if_fail(session != NULL, false);
+  g_return_val_if_fail(session->global.data != NULL, false);
+  zathura_t* zathura = session->global.data;
+  if (girara_list_size(argument_list) != 1) {
+    girara_notify(session, GIRARA_ERROR, _("Expected one path or URI argument."));
+    return false;
+  }
+  const char* path = girara_list_nth(argument_list, 0);
+  if (target == ZATHURA_PDFDB_OPEN_WINDOW) {
+    const char* executable = (zathura->global.arguments != NULL && zathura->global.arguments[0] != NULL) ?
+                                 zathura->global.arguments[0] :
+                                 "zathura";
+    const char* argv[] = {executable, path, NULL};
+    GError* error = NULL;
+    if (g_spawn_async(NULL, (char**)argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &error) == FALSE) {
+      girara_notify(session, GIRARA_ERROR, _("Could not open new window: %s"),
+                    error != NULL ? error->message : _("unknown error"));
+      g_clear_error(&error);
+      return false;
+    }
+    return true;
+  }
+  if (target == ZATHURA_PDFDB_OPEN_TAB || target == ZATHURA_PDFDB_OPEN_SPLIT) {
+    girara_notify(session, GIRARA_WARNING,
+                  _("Tabs and split panes are registered but still use the current document slot in this build."));
+  }
+  if (zathura_has_document(zathura) == true) {
+    document_close(zathura, false);
+  }
+  document_open_idle(zathura, path, NULL, ZATHURA_PAGE_NUMBER_UNSPECIFIED, NULL, NULL, NULL, NULL);
+  return true;
+}
+
+bool cmd_tabopen(girara_session_t* session, girara_list_t* argument_list) {
+  return open_path_like(session, argument_list, ZATHURA_PDFDB_OPEN_TAB);
+}
+
+bool cmd_tabnext(girara_session_t* session, girara_list_t* UNUSED(argument_list)) {
+  girara_notify(session, GIRARA_WARNING, _("Tab navigation is not available until multi-document slots are enabled."));
+  return true;
+}
+
+bool cmd_tabprevious(girara_session_t* session, girara_list_t* UNUSED(argument_list)) {
+  girara_notify(session, GIRARA_WARNING, _("Tab navigation is not available until multi-document slots are enabled."));
+  return true;
+}
+
+bool cmd_tabclose(girara_session_t* session, girara_list_t* UNUSED(argument_list)) {
+  return cmd_close(session, NULL);
+}
+
+bool cmd_splitopen(girara_session_t* session, girara_list_t* argument_list) {
+  return open_path_like(session, argument_list, ZATHURA_PDFDB_OPEN_SPLIT);
+}
+
+bool cmd_pane_next(girara_session_t* session, girara_list_t* UNUSED(argument_list)) {
+  girara_notify(session, GIRARA_WARNING, _("Pane navigation is not available until split document slots are enabled."));
   return true;
 }
 

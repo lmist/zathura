@@ -1,7 +1,7 @@
 project('zathura', 'c',
   version: '2026.05.20',
   meson_version: '>=1.5',
-  default_options: ['c_std=c23', 'warning_level=3'],
+  default_options: ['c_std=c23', 'cpp_std=c++14', 'warning_level=3'],
 )
 
 version = meson.project_version()
@@ -23,6 +23,29 @@ conf_data.set('ZVAPI', plugin_api_version)
 conf_data.set('ZVABI', plugin_abi_version)
 
 cc = meson.get_compiler('c')
+pdfdb_opt = get_option('pdfdb')
+pdfdb_enabled = false
+pdfdb_dependencies = []
+pdfdb_include_directories = []
+pdfdb_sources = files('zathura/pdfdb-bridge-disabled.c')
+
+if not pdfdb_opt.disabled()
+  if add_languages('cpp', required: pdfdb_opt, native: false)
+    cpp = meson.get_compiler('cpp')
+    voltdb_include_dir = get_option('voltdb-client-include')
+    voltdb_lib_dir = get_option('voltdb-client-libdir')
+    voltdb_lib = cpp.find_library('voltdbcpp', dirs: voltdb_lib_dir == '' ? [] : [voltdb_lib_dir], required: pdfdb_opt)
+    boost = dependency('boost', required: pdfdb_opt)
+    if voltdb_lib.found() and boost.found()
+      pdfdb_enabled = true
+      pdfdb_dependencies += [voltdb_lib, boost]
+      pdfdb_sources = files('zathura/pdfdb-bridge-voltdb.cpp')
+      if voltdb_include_dir != ''
+        pdfdb_include_directories += include_directories(voltdb_include_dir)
+      endif
+    endif
+  endif
+endif
 
 prefix = get_option('prefix')
 localedir = get_option('localedir')
@@ -71,6 +94,9 @@ defines = [
 ]
 if get_option('manpages').allowed()
   defines += '-DWITH_MANPAGES'
+endif
+if pdfdb_enabled
+  defines += '-DWITH_PDFDB'
 endif
 
 # compile flags
@@ -138,6 +164,8 @@ sources = files(
   'zathura/marks.c',
   'zathura/page.c',
   'zathura/page-widget.c',
+  'zathura/pdfdb.c',
+  'zathura/pdfdb-explorer.c',
   'zathura/plugin.c',
   'zathura/print.c',
   'zathura/render.c',
@@ -148,6 +176,7 @@ sources = files(
   'zathura/zathura.c',
 )
 sources += zathura_resources
+sources += pdfdb_sources
 
 # header files to install
 headers = files(
@@ -163,9 +192,10 @@ headers += version_header
 # zathura helper library
 libzathura = static_library('zathura',
   sources + ['zathura/database-sqlite.c'],
-  dependencies: build_dependencies + [sqlite],
-  include_directories: include_directories,
+  dependencies: build_dependencies + [sqlite] + pdfdb_dependencies,
+  include_directories: include_directories + pdfdb_include_directories,
   c_args: defines + flags,
+  cpp_args: defines + flags,
   gnu_symbol_visibility: 'hidden',
 )
 libzathura_dep = declare_dependency(link_with: libzathura)
@@ -212,10 +242,11 @@ endif
 zathura = executable(
   'zathura',
   files('zathura/main.c'),
-  dependencies: build_dependencies + [libzathura_dep],
+  dependencies: build_dependencies + [libzathura_dep] + pdfdb_dependencies,
   install: true,
-  include_directories: include_directories,
+  include_directories: include_directories + pdfdb_include_directories,
   c_args: defines + flags,
+  cpp_args: defines + flags,
   gnu_symbol_visibility: 'hidden',
   export_dynamic: true,
   win_subsystem: 'windows'
