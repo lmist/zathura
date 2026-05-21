@@ -280,6 +280,31 @@ info
 open
   Open a document. Abbreviation: ``o``.
 
+pdfdb
+  Toggle the native pdfdb document explorer.
+
+pdfdb-open
+  Open a database-backed document by slug or ID. Optional first argument:
+  ``tab``, ``window``, or ``split``.
+
+tabopen
+  Open a document or ``pdfdb://`` URI in a tab slot.
+
+tabnext
+  Select the next tab slot.
+
+tabprevious
+  Select the previous tab slot.
+
+tabclose
+  Close the current tab slot.
+
+splitopen
+  Open a document or ``pdfdb://`` URI in the split target.
+
+pane-next
+  Select the next pane target.
+
 offset
   Set page offset.
 

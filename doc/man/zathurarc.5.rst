@@ -348,6 +348,10 @@ They can also be combined with modifiers:
 
     Show or hide index.
 
+  * ``toggle_pdfdb_explorer``
+
+    Show or hide the pdfdb document explorer.
+
   * ``toggle_inputbar``
 
     Show or hide inputbar.
@@ -535,6 +539,32 @@ The settings described here can be changed with ``set``.
 
   * Value type: String
   * Default value: s
+
+*pdfdb-database-url*
+  VoltDB URL used by the optional native pdfdb explorer and ``pdfdb://``
+  resolver.
+
+  * Value type: String
+  * Default value: voltdb://localhost:21212
+
+*pdfdb-dbos-user*
+  DBOS filesystem user used for pdfdb document metadata and file blocks.
+
+  * Value type: String
+  * Default value: pdfdb
+
+*pdfdb-cache-dir*
+  Directory for reconstructed immutable pdfdb PDF cache files. If empty,
+  zathura uses ``<cache-dir>/pdfdb/documents``.
+
+  * Value type: String
+  * Default value:
+
+*pdfdb-result-limit*
+  Maximum number of pdfdb documents fetched into the explorer metadata index.
+
+  * Value type: Integer
+  * Default value: 200
 
 *inputbar-bg*
   Defines the background color for the inputbar

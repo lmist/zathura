@@ -8,13 +8,13 @@ Do not treat this tree as pdfdb application code. It is upstream-style C/GObject
 
 ## Relationship To pdfdb
 
-`pdfdb` stores PDF bytes in VoltDB and reconstructs them into disposable local cache files before opening Zathura. That architecture matches Zathura's current file-oriented plugin boundary.
+`pdfdb` stores PDF bytes in VoltDB and reconstructs them into disposable local cache files before opening Zathura. The fork now has optional native pdfdb support: it resolves `pdfdb://doc/<slug-or-id>` before `zathura_document_open`, then passes the reconstructed local PDF path into the existing document/plugin path.
 
 For future pdfdb work:
 
-- Prefer opening normal local cache files from pdfdb.
 - Do not add macFUSE or a mount daemon.
-- If literal `pdfdb://` support is needed in Zathura, resolve it before `zathura_document_open` and pass a local file path into the existing document/plugin path.
+- Keep native pdfdb support behind the Meson `pdfdb` feature option.
+- Resolve literal `pdfdb://` support before `zathura_document_open` and pass a local file path into the existing document/plugin path.
 - Preserve the original URI for display/session context where useful.
 - Avoid expanding the plugin API for storage unless the explicit goal is a broader upstream storage abstraction.
 
