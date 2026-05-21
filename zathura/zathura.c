@@ -279,6 +279,8 @@ static bool init_ui(zathura_t* zathura) {
   zathura->ui.document_widget = ZATHURA_DOCUMENT_WIDGET(widget);
   gtk_container_add(GTK_CONTAINER(zathura->ui.view), widget);
   gtk_paned_pack2(GTK_PANED(zathura->ui.shell), zathura->ui.view, true, false);
+  gtk_widget_show(zathura->ui.view);
+  gtk_widget_show(zathura->ui.shell);
   girara_set_view(zathura->ui.session, zathura->ui.shell);
 
   /* load scrollbar settings */
