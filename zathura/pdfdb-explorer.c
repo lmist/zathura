@@ -295,8 +295,10 @@ static gboolean cb_key_press(GtkWidget* UNUSED(widget), GdkEventKey* event, gpoi
   if (explorer == NULL || event == NULL) {
     return GDK_EVENT_PROPAGATE;
   }
+  const bool has_query = explorer->query != NULL && *explorer->query != '\0';
 
-  if ((event->state & GDK_META_MASK) != 0 && (event->keyval == GDK_KEY_b || event->keyval == GDK_KEY_B)) {
+  if ((event->state & (GDK_META_MASK | GDK_SUPER_MASK | GDK_MOD2_MASK)) != 0 &&
+      (event->keyval == GDK_KEY_b || event->keyval == GDK_KEY_B)) {
     zathura_pdfdb_explorer_hide(explorer);
     return GDK_EVENT_STOP;
   }
@@ -309,27 +311,47 @@ static gboolean cb_key_press(GtkWidget* UNUSED(widget), GdkEventKey* event, gpoi
     case GDK_KEY_Return:
     case GDK_KEY_KP_Enter:
     case GDK_KEY_o:
+      if (event->keyval == GDK_KEY_o && has_query == true) {
+        break;
+      }
       explorer->pending_g = false;
       open_selected(explorer, ZATHURA_PDFDB_OPEN_CURRENT);
       return GDK_EVENT_STOP;
     case GDK_KEY_t:
+      if (has_query == true) {
+        break;
+      }
       explorer->pending_g = false;
       open_selected(explorer, ZATHURA_PDFDB_OPEN_TAB);
       return GDK_EVENT_STOP;
     case GDK_KEY_w:
+      if (has_query == true) {
+        break;
+      }
       explorer->pending_g = false;
       open_selected(explorer, ZATHURA_PDFDB_OPEN_WINDOW);
       return GDK_EVENT_STOP;
     case GDK_KEY_v:
+      if (has_query == true) {
+        break;
+      }
       explorer->pending_g = false;
       open_selected(explorer, ZATHURA_PDFDB_OPEN_SPLIT);
       return GDK_EVENT_STOP;
     case GDK_KEY_j:
+      if (has_query == true) {
+        break;
+      }
+      /* fallthrough */
     case GDK_KEY_Down:
       explorer->pending_g = false;
       move_selection(explorer, 1);
       return GDK_EVENT_STOP;
     case GDK_KEY_k:
+      if (has_query == true) {
+        break;
+      }
+      /* fallthrough */
     case GDK_KEY_Up:
       explorer->pending_g = false;
       move_selection(explorer, -1);
@@ -359,10 +381,16 @@ static gboolean cb_key_press(GtkWidget* UNUSED(widget), GdkEventKey* event, gpoi
       explorer->pending_g = false;
       return GDK_EVENT_STOP;
     case GDK_KEY_G:
+      if (has_query == true) {
+        break;
+      }
       explorer->pending_g = false;
       move_to_edge(explorer, true);
       return GDK_EVENT_STOP;
     case GDK_KEY_g:
+      if (has_query == true) {
+        break;
+      }
       if (explorer->pending_g == true) {
         explorer->pending_g = false;
         move_to_edge(explorer, false);

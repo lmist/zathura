@@ -95,17 +95,17 @@ voltdb::InvocationResponse invoke_sql(const char* database_url, const std::strin
   return response;
 }
 
-std::string row_string(voltdb::Row& row, const char* name) {
+std::string row_string(voltdb::Row& row, int32_t index) {
   try {
-    return row.getString(name);
+    return row.getString(index);
   } catch (...) {
     return "";
   }
 }
 
-int64_t row_i64(voltdb::Row& row, const char* name) {
+int64_t row_i64(voltdb::Row& row, int32_t index) {
   try {
-    return row.getInt64(name);
+    return row.getInt64(index);
   } catch (...) {
     return 0;
   }
@@ -113,17 +113,17 @@ int64_t row_i64(voltdb::Row& row, const char* name) {
 
 zathura_pdfdb_document_t* doc_from_row(voltdb::Row& row) {
   auto* doc = g_new0(zathura_pdfdb_document_t, 1);
-  doc->id = g_strdup(row_string(row, "id").c_str());
-  doc->slug = g_strdup(row_string(row, "slug").c_str());
-  doc->title = g_strdup(row_string(row, "title").c_str());
-  doc->filename = g_strdup(row_string(row, "filename").c_str());
-  doc->source_url = g_strdup(row_string(row, "source_url").c_str());
-  doc->sha256 = g_strdup(row_string(row, "sha256").c_str());
-  doc->file_path = g_strdup(row_string(row, "file_path").c_str());
-  doc->size_bytes = row_i64(row, "size_bytes");
-  doc->page_count = static_cast<int>(row_i64(row, "page_count"));
-  doc->created_at_us = row_i64(row, "created_at_us");
-  doc->updated_at_us = row_i64(row, "updated_at_us");
+  doc->id = g_strdup(row_string(row, 0).c_str());
+  doc->slug = g_strdup(row_string(row, 1).c_str());
+  doc->title = g_strdup(row_string(row, 2).c_str());
+  doc->filename = g_strdup(row_string(row, 3).c_str());
+  doc->source_url = g_strdup(row_string(row, 4).c_str());
+  doc->sha256 = g_strdup(row_string(row, 5).c_str());
+  doc->size_bytes = row_i64(row, 6);
+  doc->page_count = static_cast<int>(row_i64(row, 7));
+  doc->file_path = g_strdup(row_string(row, 8).c_str());
+  doc->created_at_us = row_i64(row, 9);
+  doc->updated_at_us = row_i64(row, 10);
   return doc;
 }
 
@@ -230,7 +230,7 @@ extern "C" int zathura_pdfdb_bridge_read_file(const char* database_url, const ch
       voltdb::Row row = it.next();
       int32_t len = 0;
       std::vector<uint8_t> block(1024 * 1024);
-      if (row.getVarbinary("bytes", static_cast<int32_t>(block.size()), block.data(), &len) == false || len < 0) {
+      if (row.getVarbinary(1, static_cast<int32_t>(block.size()), block.data(), &len) == false || len < 0) {
         set_error(error, "failed to read DBOS block bytes");
         return -1;
       }

@@ -35,10 +35,14 @@ if not pdfdb_opt.disabled()
     voltdb_include_dir = get_option('voltdb-client-include')
     voltdb_lib_dir = get_option('voltdb-client-libdir')
     voltdb_lib = cpp.find_library('voltdbcpp', dirs: voltdb_lib_dir == '' ? [] : [voltdb_lib_dir], required: pdfdb_opt)
-    boost = dependency('boost', required: pdfdb_opt)
-    if voltdb_lib.found() and boost.found()
+    boost = dependency('boost', modules: ['thread', 'date_time'], required: pdfdb_opt)
+    openssl = dependency('openssl', required: pdfdb_opt)
+    libevent = dependency('libevent', required: pdfdb_opt)
+    libevent_openssl = dependency('libevent_openssl', required: pdfdb_opt)
+    libevent_pthreads = dependency('libevent_pthreads', required: pdfdb_opt)
+    if voltdb_lib.found() and boost.found() and openssl.found() and libevent.found() and libevent_openssl.found() and libevent_pthreads.found()
       pdfdb_enabled = true
-      pdfdb_dependencies += [voltdb_lib, boost]
+      pdfdb_dependencies += [voltdb_lib, boost, openssl, libevent, libevent_openssl, libevent_pthreads]
       pdfdb_sources = files('zathura/pdfdb-bridge-voltdb.cpp')
       if voltdb_include_dir != ''
         pdfdb_include_directories += include_directories(voltdb_include_dir)

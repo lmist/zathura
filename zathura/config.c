@@ -644,6 +644,8 @@ void config_load_default(zathura_t* zathura) {
   girara_shortcut_add(gsession, 0,                GDK_KEY_F5,          NULL, sc_toggle_presentation,    NORMAL, 0, NULL);
   girara_shortcut_add(gsession, 0,                GDK_KEY_F11,         NULL, sc_toggle_fullscreen,      NORMAL, 0, NULL);
   girara_shortcut_add(gsession, GDK_META_MASK,    GDK_KEY_b,           NULL, sc_toggle_pdfdb_explorer,  NORMAL, 0, NULL);
+  girara_shortcut_add(gsession, GDK_SUPER_MASK,   GDK_KEY_b,           NULL, sc_toggle_pdfdb_explorer,  NORMAL, 0, NULL);
+  girara_shortcut_add(gsession, GDK_MOD2_MASK,    GDK_KEY_b,           NULL, sc_toggle_pdfdb_explorer,  NORMAL, 0, NULL);
 
   add_default_shortcuts(gsession, NORMAL);
 
@@ -652,7 +654,9 @@ void config_load_default(zathura_t* zathura) {
 
   /* Fullscreen mode */
   girara_shortcut_add(gsession, 0, GDK_KEY_F11, NULL, sc_toggle_fullscreen, FULLSCREEN, 0, NULL);
-  girara_shortcut_add(gsession, GDK_META_MASK, GDK_KEY_b, NULL, sc_toggle_pdfdb_explorer, FULLSCREEN, 0, NULL);
+  girara_shortcut_add(gsession, GDK_META_MASK,  GDK_KEY_b, NULL, sc_toggle_pdfdb_explorer, FULLSCREEN, 0, NULL);
+  girara_shortcut_add(gsession, GDK_SUPER_MASK, GDK_KEY_b, NULL, sc_toggle_pdfdb_explorer, FULLSCREEN, 0, NULL);
+  girara_shortcut_add(gsession, GDK_MOD2_MASK,  GDK_KEY_b, NULL, sc_toggle_pdfdb_explorer, FULLSCREEN, 0, NULL);
 
   add_default_shortcuts(gsession, FULLSCREEN);
 
@@ -694,6 +698,8 @@ void config_load_default(zathura_t* zathura) {
 
   /* pdfdb mode */
   girara_shortcut_add(gsession, GDK_META_MASK,    GDK_KEY_b,           NULL, sc_toggle_pdfdb_explorer, PDFDB, 0, NULL);
+  girara_shortcut_add(gsession, GDK_SUPER_MASK,   GDK_KEY_b,           NULL, sc_toggle_pdfdb_explorer, PDFDB, 0, NULL);
+  girara_shortcut_add(gsession, GDK_MOD2_MASK,    GDK_KEY_b,           NULL, sc_toggle_pdfdb_explorer, PDFDB, 0, NULL);
 
   /* Presentation mode */
   girara_shortcut_add(gsession, 0,              GDK_KEY_J,             NULL, sc_navigate,            PRESENTATION, NEXT,         NULL);
